@@ -1,6 +1,9 @@
 import { BlobServiceClient } from '@azure/storage-blob';
-import { Injectable } from '@nestjs/common';
+import { Injectable, StreamableFile } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { log } from 'console';
+import { Response } from 'express';
+import { Readable } from 'stream';
 
 @Injectable()
 export class StorageService {
@@ -24,8 +27,24 @@ export class StorageService {
     // this.blobServiceClient.createContainer(containerName);
 
     const creationStatus = await this.createNewContainer(containerName);
-    const folderStatus = await this.createNewFolder(containerName, 'test');
-    console.log('Folder status', folderStatus);
+
+    const containerInfo =
+      this.blobServiceClient.getContainerClient(containerName);
+    const blobClient = containerInfo.getBlockBlobClient(
+      `chunk/inner_chunk/${file.originalname}`,
+    );
+    const readableUploadFile = Readable.from(file.buffer);
+
+    // let fileChunk = '';
+    // const readableStream = readableUploadFile.pipe()
+    // readableStream.on('data', (chunk) => {
+    //   fileChunk += chunk;
+    // })
+    // readableStream.on('end', () => {
+    //   console.log('End');
+    // })
+    const uploadResponse = await blobClient.uploadStream(readableUploadFile);
+    console.log('Upload status', uploadResponse);
 
     result.success = creationStatus.succeeded;
     result.message = `The Response is ${creationStatus.errorCode}`;
@@ -51,10 +70,30 @@ export class StorageService {
       .getContainerClient(containerName)
       .createIfNotExists();
   }
-  // dont know
-  async createNewFolder(containerName: string, folderName: string) {
-    return this.blobServiceClient
+
+  // download a file to local or stream a file
+  async downloadFile(
+    response: Response,
+    containerName: string,
+    fileNameWithPath: string,
+  ) {
+    log('Container Name : ', containerName, '\n File Name: ', fileNameWithPath);
+    const blobClient = this.blobServiceClient
       .getContainerClient(containerName)
-      .getAppendBlobClient(folderName);
+      .getBlockBlobClient(fileNameWithPath);
+    const blobResponse = await blobClient.download();
+    const readableStream = Readable.from(blobResponse.readableStreamBody);
+    response.setHeader('Content-Type', 'image/jpeg');
+
+    // local file streaming
+    // readableStream.pipe(createWriteStream(`files/sample.jpg`));
+    // const file = createReadStream('files/sample.jpg');
+
+    return new StreamableFile(readableStream);
   }
+  // sample payload
+  //   {
+  //     "container_name":"office",
+  //     "file_name":"chunk/SavedImage_20220605_201140_09.jpg"
+  // }
 }

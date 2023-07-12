@@ -5,9 +5,11 @@ import {
   UseInterceptors,
   Body,
   UploadedFile,
+  Res,
 } from '@nestjs/common';
 import { StorageService } from './storage.service';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { Response } from 'express';
 
 @Controller('storage')
 export class StorageController {
@@ -26,5 +28,17 @@ export class StorageController {
   @Get('containers')
   getContainers() {
     return this.storageService.listContainer();
+  }
+
+  @Get('download_file')
+  getFile(
+    @Res({ passthrough: true }) response: Response,
+    @Body() body: { container_name: string; file_name: string },
+  ) {
+    return this.storageService.downloadFile(
+      response,
+      body.container_name,
+      body.file_name,
+    );
   }
 }
