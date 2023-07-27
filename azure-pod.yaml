@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: azure-practice
+  labels:
+    name: azure-practice
+spec:
+  containers:
+    - name: azure-practice
+      image: azire
+      # resources:
+      #   limits:
+      #     memory: "128Mi"
+      #     cpu: "500m"
+      # ports:
+      #   - containerPort: <Port>
