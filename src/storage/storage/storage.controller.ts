@@ -59,7 +59,22 @@ export class StorageController {
   }
 
   @Get('check')
-  checkFile(){
+  checkFile() {
     return this.storageService.checkRead();
+  }
+
+
+  @Post('upload_file_cdn')
+  @UseInterceptors(FileInterceptor('sample_file'))
+  sampleUploadFileToCDN(
+    @UploadedFile() sampleFile: Express.Multer.File,
+  ) {
+    console.log('\nfile', sampleFile.originalname);
+    return this.storageService.uploadFileCDN(sampleFile);
+  }
+
+  @Get('list_videos')
+  fetchVideosList() {
+    return this.storageService.listAllVideos();
   }
 }
