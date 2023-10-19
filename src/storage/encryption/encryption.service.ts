@@ -6,6 +6,7 @@ import { readFileSync, writeFileSync } from 'fs';
 @Injectable()
 export class EncryptionService {
   rsaKey: NodeRSA;
+  rsaPubKey: NodeRSA;
 
   constructor() {
     // this.rsaKey = new NodeRSA()
@@ -43,6 +44,7 @@ export class EncryptionService {
   }
 
   loadPemFiles() {
+    this.rsaPubKey = new NodeRSA();
     this.rsaKey = new NodeRSA();
 
     const publicKey = readFileSync('./file_2.txt', { encoding: 'utf-8' });
@@ -50,7 +52,7 @@ export class EncryptionService {
 
     log('Public Key: \n', publicKey, '\n Private Key: \n', privateKey);
 
-    this.rsaKey.importKey(publicKey, 'public');
+    this.rsaPubKey.importKey(publicKey, 'public');
     this.rsaKey.importKey(privateKey, 'private');
     return 'Keys loaded!';
   }
@@ -61,7 +63,7 @@ export class EncryptionService {
     //   message: 'Testing',
     // };
 
-    const encData = this.rsaKey.encrypt(body, 'base64');
+    const encData = this.rsaPubKey.encrypt(body, 'base64');
     log('ENC DATA/--> ', encData);
     // writeFileSync('./encryptedCipher.txt', encData);
     const decData = this.rsaKey.decrypt(encData, 'utf8');
